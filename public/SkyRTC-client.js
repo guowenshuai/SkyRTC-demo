@@ -85,7 +85,8 @@ var SkyRTC = function() {
     /*************************服务器连接部分***************************/
 
 
-    //本地连接信道，信道为websocket
+    //本
+    // 地连接信道，信道为websocket
     skyrtc.prototype.connect = function(server, room) {
         var socket,
             that = this;
