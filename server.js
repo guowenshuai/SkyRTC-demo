@@ -5,7 +5,11 @@ var SkyRTC = require('skyrtc').listen(server);
 var path = require("path");
 
 var port = process.env.PORT || 3000;
-server.listen(port);
+/*PORT是系统环境为node.js配置的默认端口*/
+
+server.listen(port, function () {
+	console.log("port is: " + port);
+});
 
 app.use(express.static(path.join(__dirname)));
 

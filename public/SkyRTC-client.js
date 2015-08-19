@@ -55,7 +55,7 @@ var SkyRTC = function() {
     function skyrtc() {
         //本地media stream
         this.localMediaStream = null;
-        //所在房间
+        //所在房间x
         this.room = "";
         //接收文件时用于暂存接收文件
         this.fileData = {};
@@ -90,14 +90,12 @@ var SkyRTC = function() {
     skyrtc.prototype.connect = function(server, room) {
         var socket,
             that = this;
+        /*room为传入的room或者是空*/
         room = room || "";
-        socket = this.socket = new WebSocket(server);
+        socket = this.socket = new WebSocket(server);/*连接到server为地址的服务器，socket句柄*/
         socket.onopen = function() {
 
-            socket.send(JSON.stringify({
-                "eventName": "test",
-                "data": "hello"
-            }));
+            console.log("client websocket build");
 
             socket.send(JSON.stringify({
                 "eventName": "__join",
@@ -108,9 +106,11 @@ var SkyRTC = function() {
             that.emit("socket_opened", socket);
         };
 
+        /*解析从服务器收到的json数据，然后发送eventName对应的信号*/
         socket.onmessage = function(message) {
             var json = JSON.parse(message.data);
             if (json.eventName) {
+                console.log("get message:" + json.eventName);
                 that.emit(json.eventName, json.data);
             } else {
                 that.emit("socket_receive_message", socket, json);

@@ -238,6 +238,12 @@
   });
   //连接WebSocket服务器
   rtc.connect("ws:" + window.location.href.substring(window.location.protocol.length).split('#')[0], window.location.hash.slice(1));
+  /*websocket的客户端连接到服务器的方法是 =========>
+  * var connection = new WebSocket('ws://localhost:1740');
+  * 所以这里要解析页面输入的URL，用javascript获取网页上的域名，window.location.herf是域名， window.location.protocol是协议，如http：
+  * split 按照‘#’作为分隔符分隔然后存在字符串数组中；
+  * rtc.connect第一个参数是服务器地址，第二个参数是房间号，hash获取域名中从‘#’开始的部分；
+  * slice(start, end)函数获取从start到end的字符串，start end是数组下标*/
 </script>
 
 
