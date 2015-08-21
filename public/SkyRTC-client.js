@@ -136,7 +136,6 @@ var SkyRTC = function() {
         };
 
         this.on('_peers', function(data) {
-            //获取所有服务器上的
             that.connections = data.connections;
             that.me = data.you;
             that.emit("get_peers", that.connections);
@@ -145,13 +144,13 @@ var SkyRTC = function() {
 
         this.on("_ice_candidate", function(data) {
             var candidate = new nativeRTCIceCandidate(data);
-            var pc = that.peerConnections[data.socketId];
+            var pc = that.peerConnections[data.socketId];  //取出PC实例
             pc.addIceCandidate(candidate);
             that.emit('get_ice_candidate', candidate);
         });
 
-        this.on('_new_peer', function(data) {
-            that.connections.push(data.socketId);
+        this.on('_new_peer', function(data) { //创建单个的peerconnection连接，用于流的传输
+            that.connections.push(data.socketId); //将与本地建立连接的id号做记载
             var pc = that.createPeerConnection(data.socketId),
                 i, m;
             pc.addStream(that.localMediaStream);
@@ -208,13 +207,14 @@ var SkyRTC = function() {
         options.audio = !!options.audio;
 
         if (getUserMedia) {
-            this.numStreams++;
+            this.numStreams++; //需要建立连接的数目
+            /*获取本地视频流，通过stream_created事件发送stream视频流*/
             getUserMedia.call(navigator, options, function(stream) {
                     that.localMediaStream = stream;
-                    that.initializedStreams++;
-                    that.emit("stream_created", stream);
+                    that.initializedStreams++;    //已经建立连接的数目
+                    that.emit("stream_created", stream);  //发送信号，表示获取视频流成功，在客户端本地显示
                     if (that.initializedStreams === that.numStreams) {
-                        that.emit("ready");
+                        that.emit("ready");   //准备好了，可以开始创建通道了等等等等
                     }
                 },
                 function(error) {
@@ -325,7 +325,7 @@ var SkyRTC = function() {
         var that = this;
         var pc = new PeerConnection(iceServer);
         this.peerConnections[socketId] = pc;
-        pc.onicecandidate = function(evt) {
+        pc.onicecandidate = function(evt) {  //信令问题 i can't understand now
             if (evt.candidate)
                 that.socket.send(JSON.stringify({
                     "eventName": "__ice_candidate",
@@ -346,7 +346,7 @@ var SkyRTC = function() {
             that.emit('pc_add_stream', evt.stream, socketId, pc);
         };
 
-        pc.ondatachannel = function(evt) {
+        pc.ondatachannel = function(evt) { //datachannel被创建的时候触发
             that.addDataChannel(socketId, evt.channel);
             that.emit('pc_add_data_channel', evt.channel, socketId, pc);
         };
