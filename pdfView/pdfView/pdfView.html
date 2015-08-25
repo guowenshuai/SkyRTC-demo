@@ -32,6 +32,8 @@
   // header on that server.
   //
   var url = 'IntelliJ_IDEA13.pdf';
+  //设置是否能向父页面发送数据的标志
+  var canSend2Parent = false;
 //  var url = 'android contentresolver.odt';
 
 
@@ -67,8 +69,7 @@
    */
   function renderPage(num) {
     pageRendering = true;
-    //设置是否能向父页面发送数据
-    var canSend2Parent = false;
+
     // Using promise to fetch the page
     pdfDoc.getPage(num).then(function(page) {
       var viewport = page.getViewport(scale);
@@ -95,6 +96,17 @@
 
     // Update page counters
     document.getElementById('page_num').textContent = pageNum;
+
+    setTimeout(function () {
+      parent.window.getChildEle();
+    }, 200)
+
+  /*  if (canvas.readyState == "complete") {
+      canSend2Parent = true;
+      canSend2Parent && parent.window.getChildEle();
+      canSend2Parent = false;
+    }*/
+
   }
 
   /**
@@ -118,6 +130,7 @@
     }
     pageNum--;
     queueRenderPage(pageNum);
+
   }
   document.getElementById('prev').addEventListener('click', onPrevPage);
 
@@ -130,6 +143,7 @@
     }
     pageNum++;
     queueRenderPage(pageNum);
+
   }
   document.getElementById('next').addEventListener('click', onNextPage);
 

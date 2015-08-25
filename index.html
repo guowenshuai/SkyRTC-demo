@@ -102,7 +102,10 @@
   <div id="showpdf">
     <!--<input type="file" name="fileField" id="fileField" onchange="selectFileName(this.files)" height="5%">   <input type="button" value="上传" id="uploadFile">-->
 
-    <iframe name="pdfPage" id="pdfPage" src="pdfView/pdfView/pdfView.html" frameborder="0.1" scrolling="no" height="40%" width="100%" ></iframe>
+    <iframe name="pdfPage" id="pdfPage" src="pdfView/pdfView/pdfView.html"
+            frameborder="0.1" scrolling="no" height="50%" width="100%"
+            >
+    </iframe>
     <input id="btnchild" type="button" value="子页面方法" onclick="getChildEle()"/>
     <div id="screenShot"></div>
   </div>
@@ -115,14 +118,15 @@
   }
 
   function getChildEle() {
+
     var canvas = pdfPage.window.document.getElementById("the-canvas");
 
-    var cxt=canvas.getContext("2d");
+/*    var cxt=canvas.getContext("2d");
     var grd=cxt.createLinearGradient(0,0,175,50);
     grd.addColorStop(0,"#FF0000");
     grd.addColorStop(1,"#00FF00");
     cxt.fillStyle=grd;
-    cxt.fillRect(0,0,175,50);
+    cxt.fillRect(0,0,175,50);*/
 
     var canvasImg = convertCanvas2Image(canvas);/**/
     document.getElementById("screenShot").appendChild(canvasImg);
@@ -131,7 +135,8 @@
 
   function convertCanvas2Image(canvas) {
     var image = new Image();
-    image.src = canvas.toDataURL("image/png");
+    image.src = canvas.toDataURL("image/jpg");
+    image.height = '300'
     return image;
   }
 </script>
