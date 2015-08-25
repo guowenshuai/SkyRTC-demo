@@ -6,7 +6,7 @@
 </head>
 
 <body>
-<input type="file" name="fileField" id="fileField" onchange="selectFileName(this.files)" >   <input type="button" value="上传" id="uploadFile">
+<input type="file" name="fileField" id="fileField" onchange="showMsg()" >   <input type="button" value="上传" id="uploadFile" onclick="showMsg()">
 
 <div style="margin-top: 25px">
   <button id="prev">Previous</button>
@@ -49,6 +49,10 @@
   //
   // PDFJS.workerSrc = '../../build/pdf.worker.js';
 
+  function showMsg(){
+    alert("我是子页面message");
+  };
+
   var pdfDoc = null,
       pageNum = 1,
       pageRendering = false,
@@ -63,6 +67,8 @@
    */
   function renderPage(num) {
     pageRendering = true;
+    //设置是否能向父页面发送数据
+    var canSend2Parent = false;
     // Using promise to fetch the page
     pdfDoc.getPage(num).then(function(page) {
       var viewport = page.getViewport(scale);

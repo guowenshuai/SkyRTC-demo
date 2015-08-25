@@ -39,6 +39,7 @@ var SkyRTC = function() {
             return;
         }
         for (i = 0, m = events.length; i < m; i++) {
+            //apply方法能劫持另外一个对象的方法，继承另外一个对象的属性
             events[i].apply(null, args);
         }
     };
@@ -324,8 +325,9 @@ var SkyRTC = function() {
     skyrtc.prototype.createPeerConnection = function(socketId) {
         var that = this;
         var pc = new PeerConnection(iceServer);
+        //把与每个socketid建立的单个PeerConnection都保存到PeerConnections{}中
         this.peerConnections[socketId] = pc;
-        pc.onicecandidate = function(evt) {  //信令问题 i can't understand now
+        pc.onicecandidate = function(evt) {  //信令问题 i can't understand now......涉及到网络防火墙等的问题，待后研究
             if (evt.candidate)
                 that.socket.send(JSON.stringify({
                     "eventName": "__ice_candidate",
@@ -425,6 +427,7 @@ var SkyRTC = function() {
         channel.onmessage = function(message) {
             var json;
             json = JSON.parse(message.data);
+            //解析datachannel通道传送的数据，如果是‘__file’，则数据是文件类型，进行文件处理，这里可以自定义实现传输的内容
             if (json.type === '__file') {
                 /*that.receiveFileChunk(json);*/
                 that.parseFilePacket(json, socketId);
@@ -478,6 +481,7 @@ var SkyRTC = function() {
         for (socketId in that.dataChannels) {
             that.sendFile(dom, socketId);
         }
+        console.log("dom typeof: " + typeof dom);
     };
 
     //向某一单个用户发送文件
@@ -501,6 +505,7 @@ var SkyRTC = function() {
         file = dom.files[0];
         that.fileChannels[socketId] = that.fileChannels[socketId] || {};
         sendId = that.getRandomString();
+        //将获取的文件放在缓存中，状态为‘ask’
         fileToSend = {
             file: file,
             state: "ask"
@@ -524,6 +529,7 @@ var SkyRTC = function() {
                 }
             }
         }
+        //一直定时发送文件，直到发送完成后，fileToSend.state === end 才结束
         if (nextTick) {
             setTimeout(function() {
                 that.sendFileChunks();
@@ -548,7 +554,7 @@ var SkyRTC = function() {
 
         if (fileToSend.fileData.length > packetSize) {
             packet.last = false;
-            packet.data = fileToSend.fileData.slice(0, packetSize);
+            packet.data = fileToSend.fileData.slice(0, packetSize); //从fileData中截取传输的数据长度
             packet.percent = fileToSend.sendedPackets / fileToSend.allPackets * 100;
             that.emit("send_file_chunk", sendId, socketId, fileToSend.sendedPackets / fileToSend.allPackets * 100, fileToSend.file);
         } else {
@@ -566,6 +572,7 @@ var SkyRTC = function() {
             return;
         }
         channel.send(JSON.stringify(packet));
+        //控制fileData的数据长度，每次发送完固定长度的碎片后 把发送掉的那部分裁剪掉
         fileToSend.fileData = fileToSend.fileData.slice(packet.data.length);
     };
 
@@ -576,6 +583,7 @@ var SkyRTC = function() {
             reader,
             initSending = function(event, text) {
                 fileToSend.state = "send";
+                //event.target.result总是返回读取的结果
                 fileToSend.fileData = event.target.result;
                 fileToSend.sendedPackets = 0;
                 fileToSend.packetsToSend = fileToSend.allPackets = parseInt(fileToSend.fileData.length / packetSize, 10);
@@ -583,7 +591,7 @@ var SkyRTC = function() {
             };
         fileToSend = that.fileChannels[socketId][sendId];
         reader = new window.FileReader(fileToSend.file);
-        reader.readAsDataURL(fileToSend.file);
+        reader.readAsDataURL(fileToSend.file);  //使用数据URL的形式返回文件内容
         reader.onload = initSending;
         that.emit("send_file_accepted", sendId, socketId, that.fileChannels[socketId][sendId].file);
     };
@@ -650,20 +658,46 @@ var SkyRTC = function() {
     skyrtc.prototype.getTransferedFile = function(sendId) {
         var that = this,
             fileInfo = that.receiveFiles[sendId],
-            hyperlink = document.createElement("a"),
+           /* hyperlink = document.createElement("a"),*/
             mouseEvent = new MouseEvent('click', {
                 view: window,
                 bubbles: true,
                 cancelable: true
             });
-        hyperlink.href = fileInfo.data;
+/*        hyperlink.href = fileInfo.data;
         hyperlink.target = '_blank';
-        hyperlink.download = fileInfo.name || dataURL;
+        hyperlink.download = fileInfo.name || dataURL;*/
 
-        hyperlink.dispatchEvent(mouseEvent);
-        (window.URL || window.webkitURL).revokeObjectURL(hyperlink.href);
+        /*dataURL传输的数据下载有大小限制，将dataURL类型的数据转换为blob（二进制）类型，然后再下载
+        * datachannel也是可以直接传送blob，但是只有firefox支持(网络说法)，所以用dataURL传输
+        * */
+        var filename = "test.pdf";
+        var a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        var blob = dataURItoBlob(fileInfo.data, 'octet/stream');
+        var url = URL.createObjectURL(blob);
+        a.href = url;
+        a.target = '_blank';
+        a.download = fileInfo.name || dataURL;
+        a.click();
+        !moz && URL.revokeObjectURL(a.href)
+        a.parentNode.removeChild(a);
+
+       /* hyperlink.dispatchEvent(mouseEvent);
+        (window.URL || window.webkitURL).revokeObjectURL(hyperlink.href);*/
         that.emit("receive_file", sendId, fileInfo.socketId, fileInfo.name);
         that.cleanReceiveFile(sendId);
+
+    };
+
+    function dataURItoBlob(dataURI, dataTYPE) {
+        var binary = atob(dataURI.split(',')[1]),
+            array = [];
+        for (var i = 0; i < binary.length; i++) array.push(binary.charCodeAt(i));
+        return new Blob([new Uint8Array(array)], {
+            type: dataTYPE
+        });
     };
 
     //接收到发送文件请求后记录文件信息

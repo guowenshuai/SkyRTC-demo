@@ -6,4 +6,9 @@ function selectFileName(myFile) {
     var name = myFile[0].name;
     alert(name);
 
-}
+};
+
+/*function showMsg(){
+    alert("message");
+};*/
+
