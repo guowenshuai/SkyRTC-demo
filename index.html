@@ -121,12 +121,12 @@
 
     var canvas = pdfPage.window.document.getElementById("the-canvas");
 
-/*    var cxt=canvas.getContext("2d");
+    var cxt=canvas.getContext("2d");
     var grd=cxt.createLinearGradient(0,0,175,50);
     grd.addColorStop(0,"#FF0000");
     grd.addColorStop(1,"#00FF00");
     cxt.fillStyle=grd;
-    cxt.fillRect(0,0,175,50);*/
+    cxt.fillRect(0,0,175,50);
 
     var canvasImg = convertCanvas2Image(canvas);/**/
     document.getElementById("screenShot").appendChild(canvasImg);

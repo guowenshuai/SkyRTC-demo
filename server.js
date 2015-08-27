@@ -3,6 +3,32 @@ var app = express();
 var server = require('http').createServer(app);
 var SkyRTC = require('skyrtc').listen(server);
 var path = require("path");
+/***********   mongodb    *****/
+var MongoClient = require('mongodb').MongoClient,
+	assert = require('assert');
+
+var urlDb = 'mongodb://localhost:27017/myproject';
+
+MongoClient.connect(urlDb, function(err, db) {
+	assert.equal(null, err);
+	console.log("Connected correctly to server");
+
+	insertDocuments(db, function () {
+		db.close();
+	});
+});
+
+var insertDocuments = function (db, callback) {
+	var collection = db.collection('document1');
+	//noinspection JSDeprecatedSymbols
+	collection.insert([{a : 1}, {b : 2}, {c : 3}], function (err, result) {
+		assert.equal(err, null);
+		assert.equal(3, result.result.n);
+		assert.equal(3, result.ops.length);
+		console.log("inserted 3 documents into the document collection");
+		callback(result);
+	});
+}
 
 var port = process.env.PORT || 3000;
 /*PORT是系统环境为node.js配置的默认端口*/
