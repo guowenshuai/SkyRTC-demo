@@ -3,8 +3,9 @@ var app = express();
 var server = require('http').createServer(app);
 var SkyRTC = require('skyrtc').listen(server);
 var path = require("path");
-/***********   mongodb    *****/
-var MongoClient = require('mongodb').MongoClient,
+
+/*********** 通过 mongodb模块连接数据库    *****/
+/*var MongoClient = require('mongodb').MongoClient,
 	assert = require('assert');
 
 var urlDb = 'mongodb://localhost:27017/myproject';
@@ -28,7 +29,48 @@ var insertDocuments = function (db, callback) {
 		console.log("inserted 3 documents into the document collection");
 		callback(result);
 	});
-}
+}*/
+/**************************/
+
+/*********通过mongoose模块连接数据库************/
+var mongoose = require('mongoose');
+mongoose.connect('mongodb://localhost/test');
+
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function(callback) {
+	console.log("connect success");
+});
+
+var kittySchema = mongoose.Schema({
+	name: String
+});
+
+/*add methods must be added to schema before compiling it with mongoose.model*/
+kittySchema.methods.speak = function () {
+	var greeting = this.name
+		? "Meow name is " + this.name
+		: "I don't have a name";
+	console.log(greeting);
+};
+
+var Kitten = mongoose.model('Kitten', kittySchema);
+var fluffy = new Kitten({name: 'fluffy'});
+fluffy.speak();
+
+fluffy.save(function (err, fluffy) {
+	if (err) return console.error(err);
+	fluffy.speak();
+});
+
+Kitten.find(function (err, kittens) {
+	if (err) return console.error(err);
+	console.log(kittens);
+})
+
+Kitten.find({name: /^Fluffy/ }, callback);
+
+/*******************/
 
 var port = process.env.PORT || 3000;
 /*PORT是系统环境为node.js配置的默认端口*/
@@ -36,7 +78,6 @@ var port = process.env.PORT || 3000;
 server.listen(port, function () {
 	console.log("port is: " + port);
 });
-
 app.use(express.static(path.join(__dirname)));
 
 app.get('/', function(req, res) {
