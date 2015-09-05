@@ -111,12 +111,14 @@ app.post('/upload', multipart(), function (req, res) {
 	var filename = req.files.files.originalFilename || path.basename(req.files.files.ws.path);
 	//copy file to a public directory
 	var targetPath = path.dirname(__filename) + '/public/' + filename;
-	console.log("targetPath:" + targetPath);
 
+	console.log("targetPath:" + targetPath);
 	console.log("file name: " + req.files.files.originalFilename);
 	console.log(req.body, req.files);
+
 	//copy file
 	fs.createReadStream(req.files.files.path).pipe(fs.createWriteStream(targetPath));
+	fs.unlink(req.files.files.path);
 	//return file url
 	res.json({code: 200, msg: {url: 'http://' + req.headers.host + '/' + filename}});
 });
