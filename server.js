@@ -4,6 +4,10 @@ var server = require('http').createServer(app);
 var SkyRTC = require('skyrtc').listen(server);
 var path = require("path");
 
+var fs = require('fs');
+var morgan = require('morgan');
+var multipart = require('connect-multiparty');
+
 /*********** 通过 mongodb模块连接数据库    *****/
 /*var MongoClient = require('mongodb').MongoClient,
 	assert = require('assert');
@@ -34,12 +38,12 @@ var insertDocuments = function (db, callback) {
 
 /*********通过mongoose模块连接数据库************/
 var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/test');
+con = mongoose.connect('mongodb://localhost/test-new');
 
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function(callback) {
-	console.log("connect success");
+	console.log("connect success  一次打开记录");
 });
 
 var kittySchema = mongoose.Schema({
@@ -63,13 +67,31 @@ fluffy.save(function (err, fluffy) {
 	fluffy.speak();
 });
 
-Kitten.find(function (err, kittens) {
+/*Kitten.find(function (err, kittens) {
 	if (err) return console.error(err);
 	console.log(kittens);
-})
+})*/
 
-Kitten.find({name: /^Fluffy/ }, callback);
+var conditions = {name: 'fluffy'};
 
+/*Kitten.remove(conditions, function (err, res) {
+	if (err) return console.error(err);
+	console.log("fluffy remove success");
+});*/
+/*Kitten.findOneAndRemove({name: 'fluffy'}, function (err, node) {
+	if(!err) {
+		console.log("remove ss")
+	}
+});*/
+
+/*Kitten.remove({}, function (err) {
+	console.log('collection removed');
+
+});*/
+
+mongoose.connection.on('open', function () {
+	con.connection.db.dropCollection('Kitten');
+});
 /*******************/
 
 var port = process.env.PORT || 3000;
@@ -79,9 +101,37 @@ server.listen(port, function () {
 	console.log("port is: " + port);
 });
 app.use(express.static(path.join(__dirname)));
+app.use(morgan('dev'));
 
 app.get('/', function(req, res) {
 	res.sendFile(__dirname + '/index.html');
+});
+app.post('/upload', multipart(), function (req, res) {
+	//get filename
+	var filename = req.files.files.originalFilename || path.basename(req.files.files.ws.path);
+	//copy file to a public directory
+	var targetPath = path.dirname(__filename) + '/public/' + filename;
+	console.log("targetPath:" + targetPath);
+
+	console.log("file name: " + req.files.files.originalFilename);
+	console.log(req.body, req.files);
+	//copy file
+	fs.createReadStream(req.files.files.path).pipe(fs.createWriteStream(targetPath));
+	//return file url
+	res.json({code: 200, msg: {url: 'http://' + req.headers.host + '/' + filename}});
+});
+
+app.get('/env', function(req, res){
+	console.log("process.env.VCAP_SERVICES: ", process.env.VCAP_SERVICES);
+	console.log("process.env.DATABASE_URL: ", process.env.DATABASE_URL);
+	console.log("process.env.VCAP_APPLICATION: ", process.env.VCAP_APPLICATION);
+	res.json({
+		code: 200
+		, msg: {
+			VCAP_SERVICES: process.env.VCAP_SERVICES
+			, DATABASE_URL: process.env.DATABASE_URL
+		}
+	});
 });
 
 SkyRTC.rtc.on('new_connect', function(socket) {
