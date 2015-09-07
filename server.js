@@ -8,6 +8,11 @@ var fs = require('fs');
 var morgan = require('morgan');
 var multipart = require('connect-multiparty');
 
+var office2pdf = require('office2pdf'),
+	generatePdf = office2pdf.generatePdf;
+
+var bodyParser = require('body-parser');
+
 /*********** 通过 mongodb模块连接数据库    *****/
 /*var MongoClient = require('mongodb').MongoClient,
 	assert = require('assert');
@@ -100,28 +105,55 @@ var port = process.env.PORT || 3000;
 server.listen(port, function () {
 	console.log("port is: " + port);
 });
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static(path.join(__dirname)));
 app.use(morgan('dev'));
 
 app.get('/', function(req, res) {
 	res.sendFile(__dirname + '/index.html');
 });
+
+/**************文件上传后服务器接受文件*************/
 app.post('/upload', multipart(), function (req, res) {
 	//get filename
-	var filename = req.files.files.originalFilename || path.basename(req.files.files.ws.path);
+	var filename = req.files.files.originalFilename || path.basename(req.files.files.path);
 	//copy file to a public directory
-	var targetPath = path.dirname(__filename) + '/public/' + filename;
+	var targetPath = path.dirname(__filename) + '/fileDirectory/' + filename;
 
-	console.log("targetPath:" + targetPath);
-	console.log("file name: " + req.files.files.originalFilename);
-	console.log(req.body, req.files);
-
+	//console.log("targetPath:" + targetPath);
+	//console.log("file name: " + req.files.files.originalFilename);
 	//copy file
 	fs.createReadStream(req.files.files.path).pipe(fs.createWriteStream(targetPath));
+	//delete tmp file
 	fs.unlink(req.files.files.path);
+	//convert to pdf file
+	generatePdf(targetPath, function (err, result) {
+		console.log(result);
+	});
+	console.log("rooms name: " + SkyRTC.rtc.getRooms());
 	//return file url
 	res.json({code: 200, msg: {url: 'http://' + req.headers.host + '/' + filename}});
 });
+/*
+
+app.get('/json', function(req, res) {
+	res.send("hello");
+})
+*/
+app.post('/json', function (req, res) {
+	var room = "",
+		fileName = "";
+	if (req.body) {
+		//能正确解析 json 格式的post参数
+		console.log(req.body.data);
+		room = req.body.data.room;
+		fileName = req.body.data.fileName;
+	}
+	SkyRTC.rtc.emit('_uploadFile', room, fileName);
+	res.json({success: 1});
+})
 
 app.get('/env', function(req, res){
 	console.log("process.env.VCAP_SERVICES: ", process.env.VCAP_SERVICES);
@@ -134,6 +166,17 @@ app.get('/env', function(req, res){
 			, DATABASE_URL: process.env.DATABASE_URL
 		}
 	});
+});
+
+SkyRTC.rtc.on('_uploadFile', function(room, filename) {
+	var curRoom = SkyRTC.rtc.rooms[room];
+	console.log("curRoom: " + curRoom.uploadfile.room);
+	if(room === curRoom.uploadfile.room){
+		curRoom.uploadfile = {
+			fileName: filename
+		}
+	}
+
 });
 
 SkyRTC.rtc.on('new_connect', function(socket) {

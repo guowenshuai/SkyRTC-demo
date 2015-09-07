@@ -16,18 +16,19 @@
     <div class = "form-group">
       <label class = "control-label col-sm-2">上传选择</label>
       <div class = "col-sm-4">
-        <input type = "file" name = "files" class = "form-control" />
+        <input type = "file" name = "files" class = "form-control" id="fileField"/>
       </div>
     </div>
 
     <div class = "form-group">
       <div class = "col-sm-offset-2 col-sm-4">
-        <button class = "btn btn-primary" onClick = "uploadFile()">上传</button>
+        <button class = "btn btn-primary" onClick = "sendFileToServer()">上传</button>
         <span class = "help-inline" id = "spanMessage">选择文件，并上传</span>
       </div>
     </div>
 
   </form>
+  <button id="test" onclick="sendFileToServer()">按下测试</button>
 
   <div class = "row" style = "text-align: center">
     <img id = "imgShow" />
@@ -57,7 +58,8 @@
   // If absolute URL from the remote server is provided, configure the CORS
   // header on that server.
   //
-  var url = 'IntelliJ_IDEA13.pdf';
+  var pre_url = '../../fileDirectory/';
+  var url = pre_url + 'IntelliJ_IDEA13.pdf';
   //设置是否能向父页面发送数据的标志
   var canSend2Parent = false;
 //  var url = 'android contentresolver.odt';
@@ -186,5 +188,29 @@
 </script>
 <script src="http://apps.bdimg.com/libs/jquery/2.1.1/jquery.min.js"></script>
 <script src="../build/uploadfile.js"></script>
+<script src="../build/sendJson.js"></script>
+<script type="text/javascript">
+  function sendFileToServer() {
+    //发送通知，房间号
+
+    // websocket发送房间信息
+    parent.window.rtc.uploadFileToServer();
+
+    var room = parent.window.rtc.getRoomName();
+    var fileName = document.getElementById('fileField').files[0].name;
+    console.log(fileName);
+    var args = ({
+      data: {
+        "room": room,
+        "delayTime": 500,
+        "fileName": fileName
+      }
+    });
+    //http post发送房间信息
+    sendJson(args);
+    uploadFile();
+
+  }
+</script>
 </body>
 </html>

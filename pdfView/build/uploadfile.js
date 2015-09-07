@@ -1,10 +1,8 @@
 /**
- * Created by jky on 15-9-5.
+ * Created by jky on 15-9-6.
  */
-
 function uploadFile(){
     var formData = new FormData($("#frmUploadFile")[0]);
-    console.log("uploadfile");
     $.ajax({
         url: '/upload',
         type: 'POST',

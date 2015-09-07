@@ -86,11 +86,11 @@ var SkyRTC = function() {
     /*************************服务器连接部分***************************/
 
 
-    //本
-    // 地连接信道，信道为websocket
+    //本地连接信道，信道为websocket
     skyrtc.prototype.connect = function(server, room) {
         var socket,
             that = this;
+        that.room = room || "";
         /*room为传入的room或者是空*/
         room = room || "";
         socket = this.socket = new WebSocket(server);/*连接到server为地址的服务器，socket句柄*/
@@ -752,6 +752,27 @@ var SkyRTC = function() {
         var that = this;
         delete that.receiveFiles[sendId];
     };
+
+    //获取本地所在的房间名字
+    skyrtc.prototype.getRoomName = function () {
+        var room = "";
+        room = this.room || "";
+        return room;
+    }
+
+    skyrtc.prototype.uploadFileToServer = function () {
+        var room = this.getRoomName();
+        var socket = this.socket;
+        socket.send(JSON.stringify({
+            "eventName": "__uploadFile",
+            "data": {
+                "room": room,
+                "files": {
+                    room: room
+                }
+            }
+        }));
+    }
 
     return new skyrtc();
 };
