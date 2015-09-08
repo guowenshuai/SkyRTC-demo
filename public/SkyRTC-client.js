@@ -194,6 +194,10 @@ var SkyRTC = function() {
             that.addDataChannels();
             that.sendOffers();
         });
+
+        //this.on('_showPdf', function (data) {
+        //
+        //})
     };
 
 

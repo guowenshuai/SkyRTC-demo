@@ -28,7 +28,7 @@
     </div>
 
   </form>
-  <button id="test" onclick="sendFileToServer()">按下测试</button>
+  <button id="test" >按下测试</button>
 
   <div class = "row" style = "text-align: center">
     <img id = "imgShow" />
@@ -59,7 +59,18 @@
   // header on that server.
   //
   var pre_url = '../../fileDirectory/';
-  var url = pre_url + 'IntelliJ_IDEA13.pdf';
+  var url = pre_url + 'Index.pdf';
+  function setPdfUrl(cUrl) {
+    console.log("dosomething");
+    url = pre_url + cUrl;
+    PDFJS.getDocument(url).then(function (pdfDoc_) {
+      pdfDoc = pdfDoc_;
+      document.getElementById('page_count').textContent = pdfDoc.numPages;
+
+      // Initial/first page rendering
+      renderPage(pageNum);
+    });
+  }
   //设置是否能向父页面发送数据的标志
   var canSend2Parent = false;
 //  var url = 'android contentresolver.odt';
@@ -202,7 +213,6 @@
     var args = ({
       data: {
         "room": room,
-        "delayTime": 500,
         "fileName": fileName
       }
     });

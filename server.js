@@ -131,8 +131,8 @@ app.post('/upload', multipart(), function (req, res) {
 	//convert to pdf file
 	generatePdf(targetPath, function (err, result) {
 		console.log(result);
+
 	});
-	console.log("rooms name: " + SkyRTC.rtc.getRooms());
 	//return file url
 	res.json({code: 200, msg: {url: 'http://' + req.headers.host + '/' + filename}});
 });
@@ -151,6 +151,7 @@ app.post('/json', function (req, res) {
 		room = req.body.data.room;
 		fileName = req.body.data.fileName;
 	}
+	//发送信号，将post上传来的文件信息记录到对应的room中
 	SkyRTC.rtc.emit('_uploadFile', room, fileName);
 	res.json({success: 1});
 })
@@ -168,14 +169,43 @@ app.get('/env', function(req, res){
 	});
 });
 
+
 SkyRTC.rtc.on('_uploadFile', function(room, filename) {
 	var curRoom = SkyRTC.rtc.rooms[room];
 	console.log("curRoom: " + curRoom.uploadfile.room);
+	var changName = new Array();
+	changName = filename.split(".");
+	var fileName = changName[0] + "." + "pdf";
+	console.log("curRoom change: " + fileName + Date());
 	if(room === curRoom.uploadfile.room){
 		curRoom.uploadfile = {
 			fileName: filename
 		}
 	}
+	var filePath = path.dirname(__filename) + '/fileDirectory/' + fileName;
+
+	fileExist();
+	function fileExist() {
+		var ct = false;//文件是否存在
+		fs.exists(filePath, function (exists) {
+			console.log("exists" + exists)
+			if(exists) {
+				ct = true;
+				SkyRTC.rtc.broadcastInRoom(room, JSON.stringify({
+					"eventName": "_showPdf",
+					"data": {
+						fileName: fileName,
+						"delayTime": 3000
+					}
+				}));
+			}else {
+				setTimeout(fileExist(), 500);
+				console.log("continue");
+			}
+		});
+
+	}
+
 
 });
 

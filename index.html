@@ -274,6 +274,12 @@
     p.innerText = socketId + ": " + message;
     msgs.appendChild(p);
   });
+  //重新加载文件
+  rtc.on('_showPdf', function(data) {
+//    setTimeout(, data.delayTime);
+    pdfPage.window.setPdfUrl(data.fileName);
+    console.log("showpdf: " + data.fileName);
+  });
   //连接WebSocket服务器
   rtc.connect("ws:" + window.location.href.substring(window.location.protocol.length).split('#')[0], window.location.hash.slice(1));
   /*websocket的客户端连接到服务器的方法是 =========>
